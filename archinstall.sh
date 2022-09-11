@@ -112,7 +112,7 @@ sleep 3
 
 echo -e "$MSG SETTING SYSTEM TIME"
 
-ln -sf /mnt/usr/share/zoneinfo/$TIMEZONE /etc/localtime
+ln -sf /mnt/usr/share/zoneinfo/$TIMEZONE /mnt/etc/localtime
 arch-chroot /mnt hwclock --systohc
 sleep 3
 
@@ -129,10 +129,11 @@ EOF
 ############################################################################
 # USER CREATION
 
-read -p "$MSG Enter a valid user name: " NAME
+echo -e "$MSG ENTER A VALID USERNAME: "
+read NAME
 arch-chroot /mnt useradd $NAME -m
 
-printf "$MSG Enter a valid password || "
+echo -e "$MSG ENTER A VALID PASSWORD"
 arch-chroot /mnt passwd $NAME
 
 mkdir -p /mnt/etc/sudoers.d

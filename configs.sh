@@ -15,3 +15,6 @@ export KEYMAP="it"
 
 # System timezone
 export TIMEZONE="Europe/Rome"
+
+# Zram size, default is min(ram / 2, 4096)
+export ZRAMSIZE="min(ram / 2, 4096)"

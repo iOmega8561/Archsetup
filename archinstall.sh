@@ -22,6 +22,7 @@ echo "Microcode:       $UCODE"
 echo "Locale:          $LANG $ENCODING"
 echo "Keymap:          $KEYMAP"
 echo "Timezone:        $TIMEZONE"
+echo "Zram size:       $ZRAMSIZE"
 echo -e "$MSG PRESS ENTER TO CONFIRM"
 read
 
@@ -34,7 +35,7 @@ read
 
 echo -e "$MSG EXECUTING PACSTRAP TO /mnt"
 
-pacstrap /mnt base $LINUX linux-firmware $UCODE base-devel sudo networkmanager nano
+pacstrap /mnt base $LINUX linux-firmware $UCODE base-devel sudo zram-generator networkmanager nano
 sleep 3
 
 ############################################################################
@@ -89,7 +90,7 @@ sleep 3
 ############################################################################
 # LOCALES
 
-echo -e "$MSG Setting up locale $LANG"
+echo -e "$MSG SETTING LOCALE $LANG"
 
 tee -a /mnt/etc/locale.gen <<- EOF >> /dev/null
 	$LANG $ENCODING
@@ -109,11 +110,21 @@ sleep 3
 ############################################################################
 # TIME AND TIMEZONE
 
-echo -e "$MSG Setting timezone and system clock"
+echo -e "$MSG SETTING SYSTEM TIME"
 
 ln -sf /mnt/usr/share/zoneinfo/$TIMEZONE /etc/localtime
 arch-chroot /mnt hwclock --systohc
 sleep 3
+
+############################################################################
+# ZRAM
+
+echo -e "$MSG SETTING ZRAM SIZE"
+
+tee /etc/systemd/zram-generator.conf <<- EOF >> /dev/null
+	[zram0]
+	zram-size = $ZRAMSIZE
+EOF
 
 ############################################################################
 # USER CREATION

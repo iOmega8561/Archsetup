@@ -1,26 +1,47 @@
-MSG="\e[33mARCHSCRIPT\e[0m:"
-
+#!/bin/bash
 ############################################################################
-# CONF VARS
+# VARS | EDIT CAREFULLY
+
+LINUX="linux-zen"
+UCODE="amd-ucode"
+BOOTARGS="nvidia-drm.modeset=1"
 
 LANG="it_IT.UTF-8"
 KEYMAP="it"
 TIMEZONE="Europe/Rome"
-LINUXOPT="nvidia-drm.modeset=1"
 
+############################################################################
+############################################################################
+############################################################################
+############################################################################
+############################################################################
+############################################################################
+
+MSG="\033[0;33mARCHSCRIPT\033[0m:"
 ############################################################################
 # INIT
 
-echo "$MSG Please mount partitions first:"
-echo "ROOT part to /mnt"
-echo "BOOT part to /mnt/boot"
+echo -e "$MSG CHECK CONFIGURATION"
+echo "SETTINGS         VALUES"
+echo "Kernel:          $LINUX"
+echo "Microcode:       $UCODE"
+echo "Options:         $BOOTARGS"
+echo "Locale:          $LANG"
+echo "Keymap:          $KEYMAP"
+echo "Timezone:        $TIMEZONE"
+echo -e "$MSG PRESS ENTER TO CONFIRM"
+read
+
+echo -e "$MSG ENSURE PARTITIONS ARE MOUNTED:"
+echo "ext4 ROOT part to /mnt"
+echo "vfat BOOT part to /mnt/boot"
 echo "HOME part to /mnt/home (if present)"
-echo "$MSG PRESS ENTER TO INITIATE SETUP"
+echo -e "$MSG PRESS ENTER TO CONFIRM AND START"
 read
 
 echo "$MSG Executing pacstrap to /mnt"
 
-pacstrap /mnt base linux-zen linux-firmware amd-ucode base-devel sudo networkmanager nano python git
+pacstrap /mnt base $LINUX linux-firmware $UCODE base-devel sudo networkmanager nano python git
 sleep 3
 
 ############################################################################
@@ -58,17 +79,17 @@ ROOT=${MOUNT%" on /mnt type ext4 (rw,relatime)"}
 
 tee /mnt/boot/loader/entries/fallback.conf <<- EOF >> /dev/null
 	title "Arch Linux (fallback initramfs)"
-	linux /vmlinuz-linux-zen
-	initrd /amd-ucode.img
-	initrd /initramfs-linux-zen-fallback.img
-	options root=$ROOT rw $LINUXOPT
+	linux /vmlinuz-$LINUX
+	initrd /$UCODE.img
+	initrd /initramfs-$LINUX-fallback.img
+	options root=$ROOT rw $BOOTARGS
 EOF
 tee /mnt/boot/loader/entries/normal.conf <<- EOF >> /dev/null
 	title "Arch Linux"
-	linux /vmlinuz-linux-zen
-	initrd /amd-ucode.img
-	initrd /initramfs-linux-zen.img
-	options root=$ROOT rw $LINUXOPT
+	linux /vmlinuz-$LINUX
+	initrd /$UCODE.img
+	initrd /initramfs-$LINUX.img
+	options root=$ROOT rw $BOOTARGS
 EOF
 sleep 3
 
@@ -93,6 +114,15 @@ arch-chroot /mnt locale-gen
 sleep 3
 
 ############################################################################
+# TIME AND TIMEZONE
+
+echo "$MSG Setting timezone and system clock"
+
+ln -sf /mnt/usr/share/zoneinfo/$TIMEZONE /etc/localtime
+arch-chroot /mnt hwclock --systohc
+sleep 3
+
+############################################################################
 # USER CREATION
 
 read -p "$MSG Enter a valid user name: " NAME
@@ -105,15 +135,6 @@ mkdir -p /mnt/etc/sudoers.d
 tee /mnt/etc/sudoers.d/$NAME <<- EOF >> /dev/null
 	$NAME ALL=(ALL) ALL
 EOF
-sleep 3
-
-############################################################################
-# TIME AND TIMEZONE
-
-echo "$MSG Setting timezone and system clock"
-
-ln -sf /mnt/usr/share/zoneinfo/$TIMEZONE /etc/localtime
-arch-chroot /mnt hwclock --systohc
 sleep 3
 
 ############################################################################

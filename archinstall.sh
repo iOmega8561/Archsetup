@@ -1,14 +1,8 @@
 #!/bin/bash
 ############################################################################
-# VARS | EDIT CAREFULLY
+# CONFIGS
 
-LINUX="linux-zen"
-UCODE="amd-ucode"
-BOOTARGS="nvidia-drm.modeset=1"
-
-LANG="it_IT.UTF-8"
-KEYMAP="it"
-TIMEZONE="Europe/Rome"
+source configs.sh
 
 ############################################################################
 ############################################################################
@@ -17,7 +11,7 @@ TIMEZONE="Europe/Rome"
 ############################################################################
 ############################################################################
 
-MSG="\033[0;33mARCHSCRIPT\033[0m:"
+MSG="\033[0;33mSETUP\033[0m:"
 ############################################################################
 # INIT
 
@@ -25,57 +19,55 @@ echo -e "$MSG CHECK CONFIGURATION"
 echo "SETTINGS         VALUES"
 echo "Kernel:          $LINUX"
 echo "Microcode:       $UCODE"
-echo "Options:         $BOOTARGS"
-echo "Locale:          $LANG"
+echo "Locale:          $LANG $ENCODING"
 echo "Keymap:          $KEYMAP"
 echo "Timezone:        $TIMEZONE"
 echo -e "$MSG PRESS ENTER TO CONFIRM"
 read
 
 echo -e "$MSG ENSURE PARTITIONS ARE MOUNTED:"
-echo "ext4 ROOT part to /mnt"
-echo "vfat BOOT part to /mnt/boot"
+echo "ROOT partition to /mnt (NO LUKS NO LVM)"
+echo "BOOT part to /mnt/boot (MUST BE EFI TYPE-UUID)"
 echo "HOME part to /mnt/home (if present)"
 echo -e "$MSG PRESS ENTER TO CONFIRM AND START"
 read
 
-echo "$MSG Executing pacstrap to /mnt"
+echo -e "$MSG EXECUTING PACSTRAP TO /mnt"
 
-pacstrap /mnt base $LINUX linux-firmware $UCODE base-devel sudo networkmanager nano python git
+pacstrap /mnt base $LINUX linux-firmware $UCODE base-devel sudo networkmanager nano
 sleep 3
 
 ############################################################################
 # FSTAB
 
-echo "$MSG Generating fstab"
+echo -e "$MSG GENERATING FSTAB"
 genfstab -U /mnt > /mnt/etc/fstab
 sleep 3
 
 ############################################################################
 # SYSTEMD-BOOT INSTALLATION
 
-echo "$MSG Installing systemd-boot to /mnt/boot"
+echo -e "$MSG INSTALLING SYSTEMD-BOOT"
 arch-chroot /mnt bootctl install
 sleep 3
 
 ############################################################################
 # SYSTEMD-BOOT CONFIGURATION
 
-echo "$MSG Generating bootloader configuration"
+echo -e "$MSG WRITING BOOTLOADER CONFIGURATION"
 tee /mnt/boot/loader/loader.conf <<- EOF >> /dev/null
 	default normal
 	timeout 3
-	console-mode max
 EOF
 sleep 3
 
 ############################################################################
 # SYSTEMD-BOOT ENTRIES
 
-echo "$MSG Generating bootloader entries"
+echo -e "$MSG WRITING BOOTLOADER ENTRIES"
 
-MOUNT=$(mount | grep " on /mnt type ext4 (rw,relatime)")
-ROOT=${MOUNT%" on /mnt type ext4 (rw,relatime)"}
+MOUNT=$(mount | grep " on /mnt ")
+ROOT="${MOUNT%%on /*}"
 
 tee /mnt/boot/loader/entries/fallback.conf <<- EOF >> /dev/null
 	title "Arch Linux (fallback initramfs)"
@@ -84,6 +76,7 @@ tee /mnt/boot/loader/entries/fallback.conf <<- EOF >> /dev/null
 	initrd /initramfs-$LINUX-fallback.img
 	options root=$ROOT rw $BOOTARGS
 EOF
+
 tee /mnt/boot/loader/entries/normal.conf <<- EOF >> /dev/null
 	title "Arch Linux"
 	linux /vmlinuz-$LINUX
@@ -96,10 +89,10 @@ sleep 3
 ############################################################################
 # LOCALES
 
-echo "$MSG Setting up locale $LANG"
+echo -e "$MSG Setting up locale $LANG"
 
 tee -a /mnt/etc/locale.gen <<- EOF >> /dev/null
-	$LANG UTF-8
+	$LANG $ENCODING
 EOF
 
 tee /mnt/etc/locale.conf <<- EOF >> /dev/null
@@ -116,7 +109,7 @@ sleep 3
 ############################################################################
 # TIME AND TIMEZONE
 
-echo "$MSG Setting timezone and system clock"
+echo -e "$MSG Setting timezone and system clock"
 
 ln -sf /mnt/usr/share/zoneinfo/$TIMEZONE /etc/localtime
 arch-chroot /mnt hwclock --systohc
@@ -140,5 +133,5 @@ sleep 3
 ############################################################################
 # TERMINATING
 
-echo "$MSG SETUP PROCESS COMPLETED"
+echo -e "$MSG SETUP PROCESS COMPLETED"
 sleep 2

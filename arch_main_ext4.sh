@@ -22,7 +22,7 @@ sleep 3
 # SYSTEMD-BOOT INSTALLATION
 
 echo "Installing systemd-boot to /mnt/boot"
-arch-chroot /mnt bootctl-install
+arch-chroot /mnt bootctl install
 sleep 3
 
 ############################################################################

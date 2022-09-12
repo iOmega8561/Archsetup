@@ -116,7 +116,9 @@ sleep 3
 
 msg "SETTING SYSTEM TIME"
 
-ln -sf /mnt/usr/share/zoneinfo/$TIMEZONE /mnt/etc/localtime
+arch-chroot /mnt ln -sf /usr/share/zoneinfo/$TIMEZONE /etc/localtime
+sleep 1
+
 arch-chroot /mnt hwclock --systohc
 sleep 3
 
@@ -125,7 +127,7 @@ sleep 3
 
 msg "WRITING HOSTNAME TO /etc/hostname"
 
-tee /etc/hostname <<- EOF >> /dev/null
+tee /mnt/etc/hostname <<- EOF >> /dev/null
 	$HOSTNAME
 EOF
 
@@ -134,7 +136,7 @@ EOF
 
 msg "WRITING ZRAM CONFIGURATION"
 
-tee /etc/systemd/zram-generator.conf <<- EOF >> /dev/null
+tee /mnt/etc/systemd/zram-generator.conf <<- EOF >> /dev/null
 	[zram0]
 	zram-size = $ZRAMSIZE
 EOF

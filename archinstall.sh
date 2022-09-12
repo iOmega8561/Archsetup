@@ -25,6 +25,7 @@ Microcode:       $UCODE
 Locale:          $LANG $ENCODING
 Keymap:          $KEYMAP
 Timezone:        $TIMEZONE
+Hostname:        $HOSTNAME
 Zram size:       $ZRAMSIZE\n\n"
 msg "PRESS ENTER TO CONFIRM"
 read
@@ -118,6 +119,15 @@ msg "SETTING SYSTEM TIME"
 ln -sf /mnt/usr/share/zoneinfo/$TIMEZONE /mnt/etc/localtime
 arch-chroot /mnt hwclock --systohc
 sleep 3
+
+############################################################################
+# HOSTNAME
+
+msg "WRITING HOSTNAME TO /etc/hostname"
+
+tee /etc/hostname <<- EOF >> /dev/null
+	$HOSTNAME
+EOF
 
 ############################################################################
 # ZRAM

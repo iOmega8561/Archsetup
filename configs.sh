@@ -16,5 +16,8 @@ export KEYMAP="it"
 # System timezone
 export TIMEZONE="Europe/Rome"
 
+# System hostname
+export HOSTNAME="newarch"
+
 # Zram size, default is min(ram / 2, 4096)
 export ZRAMSIZE="min(ram / 2, 4096)"

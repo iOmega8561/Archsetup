@@ -11,29 +11,32 @@ source configs.sh
 ############################################################################
 ############################################################################
 
-MSG="\033[0;33mSETUP\033[0m:"
+function msg {
+	echo -e "\033[0;32m==> SETUP: \033[0m\033[1m$1\033[0m"
+}
+
 ############################################################################
 # INIT
 
-echo -e "$MSG CHECK CONFIGURATION"
-echo "SETTINGS         VALUES"
-echo "Kernel:          $LINUX"
-echo "Microcode:       $UCODE"
-echo "Locale:          $LANG $ENCODING"
-echo "Keymap:          $KEYMAP"
-echo "Timezone:        $TIMEZONE"
-echo "Zram size:       $ZRAMSIZE"
-echo -e "$MSG PRESS ENTER TO CONFIRM"
+msg "CHECK CONFIGURATION"
+printf "\nSETTINGS         VALUES
+Kernel:          $LINUX
+Microcode:       $UCODE
+Locale:          $LANG $ENCODING
+Keymap:          $KEYMAP
+Timezone:        $TIMEZONE
+Zram size:       $ZRAMSIZE\n\n"
+msg "PRESS ENTER TO CONFIRM"
 read
 
-echo -e "$MSG ENSURE PARTITIONS ARE MOUNTED:"
-echo "ROOT partition to /mnt (NO LUKS NO LVM)"
-echo "BOOT part to /mnt/boot (MUST BE EFI TYPE-UUID)"
-echo "HOME part to /mnt/home (if present)"
-echo -e "$MSG PRESS ENTER TO CONFIRM AND START"
+msg "ENSURE PARTITIONS ARE MOUNTED:"
+printf "\nROOT partition to /mnt (NO LUKS NO LVM)
+EFI part to /mnt/boot (MUST BE EFI TYPE-UUID)
+HOME part to /mnt/home (if present)\n\n"
+msg "PRESS ENTER TO CONFIRM AND START"
 read
 
-echo -e "$MSG EXECUTING PACSTRAP TO /mnt"
+msg "EXECUTING PACSTRAP TO /mnt"
 
 pacstrap /mnt base $LINUX linux-firmware $UCODE base-devel sudo zram-generator networkmanager nano
 sleep 3
@@ -41,21 +44,21 @@ sleep 3
 ############################################################################
 # FSTAB
 
-echo -e "$MSG GENERATING FSTAB"
+msg "GENERATING FSTAB"
 genfstab -U /mnt > /mnt/etc/fstab
 sleep 3
 
 ############################################################################
 # SYSTEMD-BOOT INSTALLATION
 
-echo -e "$MSG INSTALLING SYSTEMD-BOOT"
+msg "INSTALLING SYSTEMD-BOOT"
 arch-chroot /mnt bootctl install
 sleep 3
 
 ############################################################################
 # SYSTEMD-BOOT CONFIGURATION
 
-echo -e "$MSG WRITING BOOTLOADER CONFIGURATION"
+msg "WRITING BOOTLOADER CONFIGURATION"
 tee /mnt/boot/loader/loader.conf <<- EOF >> /dev/null
 	default normal
 	timeout 3
@@ -65,17 +68,17 @@ sleep 3
 ############################################################################
 # SYSTEMD-BOOT ENTRIES
 
-echo -e "$MSG WRITING BOOTLOADER ENTRIES"
+msg "WRITING BOOTLOADER ENTRIES"
 
 MOUNT=$(mount | grep " on /mnt ")
-ROOT="${MOUNT%%on /*}"
+ROOT="${MOUNT%%on /mnt*}"
 
 tee /mnt/boot/loader/entries/fallback.conf <<- EOF >> /dev/null
 	title "Arch Linux (fallback initramfs)"
 	linux /vmlinuz-$LINUX
 	initrd /$UCODE.img
 	initrd /initramfs-$LINUX-fallback.img
-	options root=$ROOT rw $BOOTARGS
+	options root=$ROOT rw
 EOF
 
 tee /mnt/boot/loader/entries/normal.conf <<- EOF >> /dev/null
@@ -83,14 +86,14 @@ tee /mnt/boot/loader/entries/normal.conf <<- EOF >> /dev/null
 	linux /vmlinuz-$LINUX
 	initrd /$UCODE.img
 	initrd /initramfs-$LINUX.img
-	options root=$ROOT rw $BOOTARGS
+	options root=$ROOT rw
 EOF
 sleep 3
 
 ############################################################################
 # LOCALES
 
-echo -e "$MSG SETTING LOCALE $LANG"
+msg "SETTING LOCALE $LANG"
 
 tee -a /mnt/etc/locale.gen <<- EOF >> /dev/null
 	$LANG $ENCODING
@@ -110,7 +113,7 @@ sleep 3
 ############################################################################
 # TIME AND TIMEZONE
 
-echo -e "$MSG SETTING SYSTEM TIME"
+msg "SETTING SYSTEM TIME"
 
 ln -sf /mnt/usr/share/zoneinfo/$TIMEZONE /mnt/etc/localtime
 arch-chroot /mnt hwclock --systohc
@@ -119,7 +122,7 @@ sleep 3
 ############################################################################
 # ZRAM
 
-echo -e "$MSG SETTING ZRAM SIZE"
+msg "WRITING ZRAM CONFIGURATION"
 
 tee /etc/systemd/zram-generator.conf <<- EOF >> /dev/null
 	[zram0]
@@ -129,11 +132,11 @@ EOF
 ############################################################################
 # USER CREATION
 
-echo -e "$MSG ENTER A VALID USERNAME: "
+msg "ENTER A VALID USERNAME: "
 read NAME
 arch-chroot /mnt useradd $NAME -m
 
-echo -e "$MSG ENTER A VALID PASSWORD"
+msg "ENTER A VALID PASSWORD"
 arch-chroot /mnt passwd $NAME
 
 mkdir -p /mnt/etc/sudoers.d
@@ -145,5 +148,5 @@ sleep 3
 ############################################################################
 # TERMINATING
 
-echo -e "$MSG SETUP PROCESS COMPLETED"
+msg "SETUP PROCESS COMPLETED"
 sleep 2

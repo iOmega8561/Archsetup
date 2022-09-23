@@ -158,7 +158,7 @@ tee /mnt/etc/sudoers.d/$NAME <<- EOF >> /dev/null
 	$NAME ALL=(ALL) ALL
 EOF
 
-usermod -aG wheel $NAME
+arch-chroot usermod -aG wheel $NAME
 
 sleep 3
 

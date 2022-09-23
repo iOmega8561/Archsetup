@@ -41,7 +41,7 @@ msg "EXECUTING PACSTRAP TO /mnt"
 
 timedatectl set-ntp true
 
-pacstrap /mnt base $LINUX linux-firmware $UCODE base-devel sudo zram-generator networkmanager nano
+pacstrap /mnt base $LINUX $LINUX-headers linux-firmware $UCODE base-devel sudo zram-generator networkmanager nano
 sleep 3
 
 ############################################################################

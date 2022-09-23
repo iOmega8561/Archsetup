@@ -157,6 +157,9 @@ mkdir -p /mnt/etc/sudoers.d
 tee /mnt/etc/sudoers.d/$NAME <<- EOF >> /dev/null
 	$NAME ALL=(ALL) ALL
 EOF
+
+usermod -aG wheel $NAME
+
 sleep 3
 
 ############################################################################

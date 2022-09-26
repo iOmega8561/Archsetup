@@ -1,2 +1,2 @@
 # Archscripts
-A personal collection of Arch Linux scripts
+A personal collection of scripts

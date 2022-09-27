@@ -158,7 +158,7 @@ tee /mnt/etc/sudoers.d/$NAME <<- EOF >> /dev/null
 	$NAME ALL=(ALL) ALL
 EOF
 
-arch-chroot usermod -aG wheel $NAME
+msg "ADD MANUALLY NEW USER TO \"wheel\" GROUP IF NEEDED"
 
 sleep 3
 

@@ -16,30 +16,44 @@ function msg {
 }
 
 ############################################################################
-# INIT
+# DATA CHECKS
 
-msg "CHECK CONFIGURATION"
+msg "CHECK THIS DATA BEFORE CONTINUING"
 printf "\nSETTINGS         VALUES
 Locale:          $LANG $ENCODING
 Keymap:          $KEYMAP
 Timezone:        $TIMEZONE
 Hostname:        $HOSTNAME
+Zram:            $ZRAM
 Zram size:       $ZRAMSIZE\n\n"
-msg "PRESS ENTER TO CONFIRM"
+msg "PRESS ENTER TO CONTINUE"
 read
 
-msg "ENSURE PARTITIONS ARE MOUNTED:"
-printf "\nROOT partition to /mnt (NO LUKS NO LVM)
-EFI part to /mnt/boot (MUST BE EFI TYPE-UUID)
-HOME part to /mnt/home (if present)\n\n"
-msg "PRESS ENTER TO CONFIRM AND START"
+if [ "$ZRAM" = false ] ; then
+	msg "ZRAM IS DISABLED, YOU PROBABLY WANT A SWAP PARTITION"
+	msg "PRESS ENTER TO CONTINUE"
+	read
+fi
+
+msg "MAKE SURE THIS PARTITIONS ARE MOUNTED:"
+printf "\nROOT partition to /mnt     [ TYPE 27 --> Linux root (ARM64) ]
+EFI partition to /mnt/boot [ TYPE 1 --> EFI System Partition ]
+
+Any other partition you'd want in your FSTAB
+Swap partition will be auto-detected the correct GUID type is set\n\n"
+
+msg "PRESS ENTER TO START THE INSTALLATION"
 read
 
-msg "EXECUTING PACSTRAP TO /mnt"
-
+############################################################################
+# NTP
 timedatectl set-ntp true
 
-pacstrap /mnt base linux linux-firmware base-devel sudo zram-generator networkmanager nano
+############################################################################
+# PACSTRAP
+
+msg "EXECUTING PACSTRAP TO /mnt"
+pacstrap /mnt base linux linux-firmware base-devel sudo networkmanager nano
 sleep 3
 
 ############################################################################
@@ -132,12 +146,16 @@ EOF
 ############################################################################
 # ZRAM
 
-msg "WRITING ZRAM CONFIGURATION"
+if [ "$ZRAM" = true ] ; then
+	msg "INSTALLING ZRAM-GENERATOR"
+	arch-chroot /mnt pacman -S --noconfirm zram-generator
 
-tee /mnt/etc/systemd/zram-generator.conf <<- EOF >> /dev/null
-	[zram0]
-	zram-size = $ZRAMSIZE
-EOF
+	msg "WRITING ZRAM CONFIGURATION"
+	tee /mnt/etc/systemd/zram-generator.conf <<- EOF >> /dev/null
+		[zram0]
+		zram-size = $ZRAMSIZE
+	EOF
+fi
 
 ############################################################################
 # USER CREATION
@@ -154,7 +172,7 @@ tee /mnt/etc/sudoers.d/$NAME <<- EOF >> /dev/null
 	$NAME ALL=(ALL) ALL
 EOF
 
-msg "ADD MANUALLY NEW USER TO \"wheel\" GROUP IF NEEDED"
+arch-chroot /mnt usermod -aG wheel $NAME
 
 sleep 3
 

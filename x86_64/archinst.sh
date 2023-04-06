@@ -16,7 +16,7 @@ function msg {
 }
 
 ############################################################################
-# INIT
+# DATA CHECKS
 
 msg "CHECK THIS DATA BEFORE CONTINUING"
 printf "\nSETTINGS         VALUES
@@ -47,10 +47,14 @@ Swap partition will be auto-detected the correct GUID type is set\n\n"
 msg "PRESS ENTER TO START THE INSTALLATION"
 read
 
-msg "EXECUTING PACSTRAP TO /mnt"
-
+############################################################################
+# NTP
 timedatectl set-ntp true
 
+############################################################################
+# PACSTRAP
+
+msg "EXECUTING PACSTRAP TO /mnt"
 pacstrap /mnt base $LINUX $LINUX-headers linux-firmware $UCODE base-devel sudo networkmanager nano
 sleep 3
 

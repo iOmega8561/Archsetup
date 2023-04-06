@@ -148,7 +148,7 @@ EOF
 
 if [ "$ZRAM" = true ] ; then
 	msg "INSTALLING ZRAM-GENERATOR"
-	arch-chroot /mnt pacman -S zram-generator
+	arch-chroot /mnt pacman -S --noconfirm zram-generator
 
 	msg "WRITING ZRAM CONFIGURATION"
 	tee /mnt/etc/systemd/zram-generator.conf <<- EOF >> /dev/null

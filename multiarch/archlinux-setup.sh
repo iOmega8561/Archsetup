@@ -16,12 +16,22 @@ function msg {
 }
 
 ############################################################################
+# CPU ARCHITECTURE CHECKS
+
+ARCH=$(uname -m)
+
+if [ "$ARCH" != "x86_64" ] ; then
+	export LINUX=linux
+	unset CPU_UCODE
+fi
+
+############################################################################
 # DATA CHECKS
 
 msg "CHECK THIS DATA BEFORE CONTINUING"
 printf "\nSETTINGS         VALUES
 Kernel:          $LINUX
-Microcode:       $UCODE
+Microcode:       $CPU_UCODE
 Locale:          $LANG $ENCODING
 Keymap:          $KEYMAP
 Timezone:        $TIMEZONE
@@ -55,7 +65,7 @@ timedatectl set-ntp true
 # PACSTRAP
 
 msg "EXECUTING PACSTRAP TO /mnt"
-pacstrap /mnt base $LINUX $LINUX-headers linux-firmware $UCODE base-devel sudo networkmanager nano
+pacstrap /mnt base $LINUX $LINUX-headers linux-firmware base-devel sudo networkmanager nano $CPU_UCODE
 sleep 3
 
 ############################################################################
@@ -77,7 +87,7 @@ sleep 3
 
 msg "WRITING BOOTLOADER CONFIGURATION"
 tee /mnt/boot/loader/loader.conf <<- EOF >> /dev/null
-	default normal
+	default 01-arch
 	timeout 3
 EOF
 sleep 3
@@ -90,22 +100,44 @@ msg "WRITING BOOTLOADER ENTRIES"
 MOUNT=$(mount | grep " on /mnt ")
 ROOT="${MOUNT%%on /mnt*}"
 
-tee /mnt/boot/loader/entries/fallback.conf <<- EOF >> /dev/null
-	title "Arch Linux (fallback initramfs)"
-	linux /vmlinuz-$LINUX
-	initrd /$UCODE.img
-	initrd /initramfs-$LINUX-fallback.img
-	options root=$ROOT rw
-EOF
+if [ -z "${CPU_UCODE+x}" ] ; then
 
-tee /mnt/boot/loader/entries/normal.conf <<- EOF >> /dev/null
-	title "Arch Linux"
-	linux /vmlinuz-$LINUX
-	initrd /$UCODE.img
-	initrd /initramfs-$LINUX.img
-	options root=$ROOT rw
-EOF
-sleep 3
+	msg "CPU ARCH IS NOT x86_64"
+
+	tee /mnt/boot/loader/entries/02-arch-fallback.conf <<- EOF >> /dev/null
+		title "Arch Linux (fallback initramfs)"
+		linux /Image
+		initrd /initramfs-$LINUX-fallback.img
+		options root=$ROOT rw
+		sort-key arch-fallback
+	EOF
+
+	tee /mnt/boot/loader/entries/01-arch.conf <<- EOF >> /dev/null
+		title "Arch Linux"
+		linux /Image
+		initrd /initramfs-$LINUX.img
+		options root=$ROOT rw
+		sort-key arch
+	EOF
+else
+	tee /mnt/boot/loader/entries/02-arch-fallback.conf <<- EOF >> /dev/null
+		title "Arch Linux (fallback initramfs)"
+		linux /vmlinuz-$LINUX
+		initrd /$CPU_UCODE.img
+		initrd /initramfs-$LINUX-fallback.img
+		options root=$ROOT rw
+		sort-key arch-fallback
+	EOF
+
+	tee /mnt/boot/loader/entries/01-arch.conf <<- EOF >> /dev/null
+		title "Arch Linux"
+		linux /vmlinuz-$LINUX
+		initrd /$CPU_UCODE.img
+		initrd /initramfs-$LINUX.img
+		options root=$ROOT rw
+		sort-key arch
+	EOF
+fi
 
 ############################################################################
 # LOCALES

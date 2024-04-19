@@ -3,7 +3,7 @@
 This is a learning project, and although i use it quite a lot without issues, it's really not production-ready so use it carefully.
 
 ## What's this?
-This is a bash script that performs basic operations to install Arch Linux without all the hassle of having to remember what to do every once in a while. Since i needed to run some ARM64 machines, i decided to include both x86 and ARM64 versions of the exact same script.
+This is a bash script that performs basic operations to install Arch Linux without all the hassle of having to remember what to do every once in a while. Since i needed to run some ARM64 machines, ~i decided to include both x86 and ARM64 versions of the exact same script~ multiarch now works for both.
 
 ## Who is this for?
 This is for people, like myself, that can already install their system manually, but can't bother with having to check the official guide every time they forget something. Basic knowledge of the installation process is required.

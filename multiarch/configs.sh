@@ -1,8 +1,10 @@
 # Linux Kernel to install from linux, linux-zen, linux-lts, linux-hardened
+# This has no effect if cpu architecture is not x86_64, if will default to "linux"
 export LINUX="linux-zen"
 
 # CPU microcode, amd-ucode or intel-ucode
-export UCODE="amd-ucode"
+# This has no effect if cpu architecture is not x86_64, if will unset
+export CPU_UCODE="amd-ucode"
 
 # System locale
 export LANG="it_IT.UTF-8"

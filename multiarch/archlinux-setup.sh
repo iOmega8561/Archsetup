@@ -92,7 +92,7 @@ Swap partition will be auto-detected if the correct GUID type is set\n\n"
 # PARTITION CHECKS
 
 MOUNT_DUMP=$(mount | grep " on /mnt ")
-ROOT_NAME="${MOUNT_DUMP%%on /*}"
+ROOT_NAME="${MOUNT_DUMP%%on /mnt*}"
 
 unset MOUNT_DUMP
 

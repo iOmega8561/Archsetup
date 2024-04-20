@@ -81,7 +81,7 @@ if [ "$ZRAM" = false ] ; then
 	read
 fi
 
-msg 1 "MAKE SURE THIS PARTITIONS ARE MOUNTED:"
+msg 1 "MAKE SURE THESE PARTITIONS ARE MOUNTED:"
 printf "\nROOT partition to /mnt     [ TYPE 23 --> Linux root (x86-64) ]
 EFI partition to /mnt/boot [ TYPE 1 --> EFI System Partition ]
 

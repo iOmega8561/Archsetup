@@ -2,10 +2,6 @@
 # This has no effect if cpu architecture is not x86_64, it will default to "linux"
 export LINUX="linux-zen"
 
-# CPU microcode, amd-ucode or intel-ucode
-# This has no effect if cpu architecture is not x86_64, it will unset
-export CPU_UCODE="amd-ucode"
-
 # System locale
 export LANG="it_IT.UTF-8"
 

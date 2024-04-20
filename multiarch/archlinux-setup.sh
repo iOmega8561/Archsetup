@@ -107,6 +107,8 @@ msg 1 "DETECTED BOOT MOUNT: $BOOT_NAME"
 msg 2 "PRESS ENTER TO START THE INSTALLATION"
 read
 
+unset BOOT_NAME
+
 ############################################################################
 # NTP
 timedatectl set-ntp true

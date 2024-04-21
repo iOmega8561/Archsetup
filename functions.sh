@@ -1,9 +1,25 @@
+# Copyright (C) 2024  Giuseppe Rocco
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#
+#
 #!/usr/bin/env bash
-
+#
 # In this file we store those routines that are not
 # interactive and have a bunch of lines that may clog
 # the main script too much and destroy readability
-
 function log {
 
 	declare code="0m"
@@ -25,7 +41,7 @@ function log {
 	echo -e "\033[0;$code==> SETUP: \033[0m\033[1m$2\033[0m"
 }
 
-function machine_checks {
+function check_machine {
 	declare -gr CPU_ARCH=$(uname --machine)
 
 	# We always like to know the hardware we're dealing with
@@ -60,7 +76,7 @@ function machine_checks {
 	esac
 }
 
-function partition_checks {
+function check_mounts {
 	# We try to determine what is mounted
 	# first on /mnt then on /mnt/boot
 
@@ -85,11 +101,16 @@ function partition_checks {
 	# TO-BE-DONE
 }
 
-function bootloader_config {
-	declare image="vmlinuz-$CFG_LINUX"
+function config_bootloader {
+	# This function wants the Linux Kernel flavour
+	# and the root partition name/UUID as input parameters
+	declare linux="$1"
+	declare root="$2"
 
 	# non-x86 systems might have their kernels named as "Image"
 	# that is the case with arm64 machines
+	declare image="vmlinuz-$linux"
+
 	if [ -f /mnt/boot/Image ] ; then
 		image="Image"
 	fi
@@ -100,16 +121,16 @@ function bootloader_config {
 	tee /mnt/boot/loader/entries/02-arch-fallback.conf <<- EOF >> /dev/null
 		title "Arch Linux (fallback initramfs)"
 		linux /$image
-		initrd /initramfs-$CFG_LINUX-fallback.img
-		options root=$PART_ROOT rw
+		initrd /initramfs-$linux-fallback.img
+		options root=$root rw
 		sort-key arch-fallback
 	EOF
 
 	tee /mnt/boot/loader/entries/01-arch.conf <<- EOF >> /dev/null
 		title "Arch Linux"
 		linux /$image
-		initrd /initramfs-$CFG_LINUX.img
-		options root=$PART_ROOT rw
+		initrd /initramfs-$linux.img
+		options root=$root rw
 		sort-key arch
 	EOF
 
@@ -120,4 +141,27 @@ function bootloader_config {
 		default 01-arch
 		timeout 3
 	EOF
+}
+
+function config_localization {
+	# This function wants these three parameters
+	# LANG ENCODING KEYMAP in this order
+
+	declare lang="$1"
+	declare encoding="$2"
+	declare keymap="$3"
+
+	tee -a /mnt/etc/locale.gen <<- EOF >> /dev/null
+		$lang $encoding
+	EOF
+
+	tee /mnt/etc/locale.conf <<- EOF >> /dev/null
+		LANG=$lang
+	EOF
+
+	tee /mnt/etc/vconsole.conf <<- EOF >> /dev/null
+		KEYMAP=$keymap
+	EOF
+
+	arch-chroot /mnt locale-gen
 }

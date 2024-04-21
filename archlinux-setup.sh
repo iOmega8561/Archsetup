@@ -1,11 +1,25 @@
-#!/bin/bash
+# Copyright (C) 2024  Giuseppe Rocco
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#
+#
+#!/usr/bin/env bash
 
 source configs.sh
 source functions.sh
 
-############################################################################
-############################################################################
-############################################################################
 ############################################################################
 ############################################################################
 ############################################################################
@@ -86,27 +100,14 @@ arch-chroot /mnt bootctl install
 sleep 3
 
 log 2 "WRITING BOOTLOADER CONFIGURATION"
-bootloader_config
+config_bootloader "$CFG_LINUX" "$PART_ROOT"
 sleep 3
 
 ############################################################################
 # LOCALES
 
 log 2 "SETTING LOCALE $CFG_LANG"
-
-tee -a /mnt/etc/locale.gen <<- EOF >> /dev/null
-	$CFG_LANG $CFG_ENCODING
-EOF
-
-tee /mnt/etc/locale.conf <<- EOF >> /dev/null
-	LANG=$CFG_LANG
-EOF
-
-tee /mnt/etc/vconsole.conf <<- EOF >> /dev/null
-	KEYMAP=$CFG_KEYMAP
-EOF
-
-arch-chroot /mnt locale-gen
+config_localization "$CFG_LANG" "$CFG_ENCODING" "$CFG_KEYMAP"
 sleep 3
 
 ############################################################################

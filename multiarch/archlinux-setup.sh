@@ -13,36 +13,35 @@ source configs.sh
 
 function msg {
 
-	code="0m"
+	local CODE="0m"
 
 	case $1 in
 		2)
-			code="32m"
+			CODE="32m"
 			;;
 		1)
-			code="33m"
+			CODE="33m"
 			;;
 		0)
-			code="31m"
+			CODE="31m"
 			;;
 		*)
 			;;
 	esac
 
-	echo -e "\033[0;$code==> SETUP: \033[0m\033[1m$2\033[0m"
+	echo -e "\033[0;$CODE==> SETUP: \033[0m\033[1m$2\033[0m"
 }
 
 ############################################################################
-# MACHINE CHECKS
+# CPU CHECKS
 
-ARCH=$(uname -m)
+CPU_ARCH=$(uname -m)
 
-CPUINFO_DUMP="$(cat /proc/cpuinfo | grep -m 1 vendor_id)"
-CPU_VENDOR="${CPUINFO_DUMP#vendor_id*: }"
+CPU_VENDOR="${$(cat /proc/cpuinfo \
+			  | grep --max-count=1 vendor_id)\
+			  #vendor_id*: }"
 
-unset CPUINFO_DUMP
-
-msg 2 "CPU VENDOR $CPU_VENDOR, ARCH $ARCH"
+msg 2 "CPU VENDOR $CPU_VENDOR, ARCH $CPU_ARCH"
 
 case $CPU_VENDOR in
 	AuthenticAMD)
@@ -55,27 +54,32 @@ case $CPU_VENDOR in
 		;;
 esac
 
-if [ "$ARCH" != "x86_64" ] ; then
-	export LINUX=linux
+if [[ "$CPU_ARCH" != "x86_64" ]] ; then
 	unset CPU_UCODE
+	unset CFG_LINUX
+
+	export CFG_LINUX=linux
 fi
+
+unset CPU_VENDOR
+unset CPU_ARCH
 
 ############################################################################
 # CONFIG CHECKS
 
 msg 1 "CHECK THIS DATA BEFORE CONTINUING"
 printf "\nSETTINGS         VALUES
-Kernel:          $LINUX
-Locale:          $LANG $ENCODING
-Keymap:          $KEYMAP
-Timezone:        $TIMEZONE
-Hostname:        $HOSTNAME
-Zram:            $ZRAM
-Zram size:       $ZRAMSIZE\n\n"
+Kernel:          $CFG_LINUX
+Locale:          $CFG_LANG $CFG_ENCODING
+Keymap:          $CFG_KEYMAP
+Timezone:        $CFG_TIMEZONE
+Hostname:        $CFG_HOSTNAME
+Zram:            $CFG_ZRAM
+Zram size:       $CFG_ZRAMSIZE\n\n"
 msg 2 "PRESS ENTER TO CONTINUE"
 read
 
-if [ "$ZRAM" = false ] ; then
+if [[ "$CFG_ZRAM" = false ]] ; then
 	msg 1 "ZRAM IS DISABLED, YOU PROBABLY WANT A SWAP PARTITION"
 	msg 2 "PRESS ENTER TO CONTINUE"
 	read
@@ -91,23 +95,21 @@ Swap partition will be auto-detected if the correct GUID type is set\n\n"
 ############################################################################
 # PARTITION CHECKS
 
-MOUNT_DUMP=$(mount | grep " on /mnt ")
-ROOT_NAME="${MOUNT_DUMP%%on /mnt*}"
+PART_ROOT="${$(mount \
+			 | grep " on /mnt ")\
+			 %%on /mnt*}"
 
-unset MOUNT_DUMP
+PART_BOOT="${$(mount \
+			 | grep " on /mnt/boot ")\
+			 %%on /mnt/boot*}"
 
-MOUNT_DUMP=$(mount | grep " on /mnt/boot ")
-BOOT_NAME="${MOUNT_DUMP%%on /mnt/boot*}"
-
-unset MOUNT_DUMP
-
-msg 1 "DETECTED ROOT MOUNT: $ROOT_NAME"
-msg 1 "DETECTED BOOT MOUNT: $BOOT_NAME"
+msg 1 "DETECTED ROOT MOUNT: $PART_ROOT"
+msg 1 "DETECTED BOOT MOUNT: $PART_BOOT"
 
 msg 2 "PRESS ENTER TO START THE INSTALLATION"
 read
 
-unset BOOT_NAME
+unset PART_BOOT
 
 ############################################################################
 # NTP
@@ -117,7 +119,8 @@ timedatectl set-ntp true
 # PACSTRAP
 
 msg 2 "EXECUTING PACSTRAP TO /mnt"
-pacstrap /mnt base $LINUX $LINUX-headers linux-firmware base-devel sudo networkmanager nano $CPU_UCODE
+pacstrap /mnt base $CFG_LINUX $CFG_LINUX-headers linux-firmware \
+			  base-devel sudo networkmanager nano $CPU_UCODE
 sleep 3
 
 unset CPU_UCODE
@@ -151,68 +154,68 @@ sleep 3
 
 msg 2 "WRITING BOOTLOADER ENTRIES"
 
-KERNEL_IMAGE="vmlinuz-$LINUX"
+BOOT_IMAGE="vmlinuz-$CFG_LINUX"
 
 if [ -f /mnt/boot/Image ] ; then
-	KERNEL_IMAGE="Image"
+	BOOT_IMAGE="Image"
 fi
 
 tee /mnt/boot/loader/entries/02-arch-fallback.conf <<- EOF >> /dev/null
 	title "Arch Linux (fallback initramfs)"
-	linux /$KERNEL_IMAGE
-	initrd /initramfs-$LINUX-fallback.img
-	options root=$ROOT_NAME rw
+	linux /$BOOT_IMAGE
+	initrd /initramfs-$CFG_LINUX-fallback.img
+	options root=$PART_ROOT rw
 	sort-key arch-fallback
 EOF
 
 tee /mnt/boot/loader/entries/01-arch.conf <<- EOF >> /dev/null
 	title "Arch Linux"
-	linux /$KERNEL_IMAGE
-	initrd /initramfs-$LINUX.img
-	options root=$ROOT_NAME rw
+	linux /$BOOT_IMAGE
+	initrd /initramfs-$CFG_LINUX.img
+	options root=$PART_ROOT rw
 	sort-key arch
 EOF
 
-unset KERNEL_IMAGE
-unset LINUX
-unset ROOT_NAME
+unset BOOT_IMAGE
+unset CFG_LINUX
+unset PART_ROOT
 
 ############################################################################
 # LOCALES
 
-msg 2 "SETTING LOCALE $LANG"
+msg 2 "SETTING LOCALE $CFG_LANG"
 
 tee -a /mnt/etc/locale.gen <<- EOF >> /dev/null
-	$LANG $ENCODING
+	$CFG_LANG $CFG_ENCODING
 EOF
 
 tee /mnt/etc/locale.conf <<- EOF >> /dev/null
-	LANG=$LANG
+	LANG=$CFG_LANG
 EOF
 
 tee /mnt/etc/vconsole.conf <<- EOF >> /dev/null
-	KEYMAP=$KEYMAP
+	KEYMAP=$CFG_KEYMAP
 EOF
 
 arch-chroot /mnt locale-gen
 sleep 3
 
-unset LANG
-unset ENCODING
-unset KEYMAP
+unset CFG_LANG
+unset CFG_ENCODING
+unset CFG_KEYMAP
 
 ############################################################################
 # TIME AND TIMEZONE
 
 msg 2 "SETTING SYSTEM TIME"
 
-arch-chroot /mnt ln -sf /usr/share/zoneinfo/$TIMEZONE /etc/localtime
+arch-chroot /mnt ln -sf /usr/share/zoneinfo/$CFG_TIMEZONE /etc/localtime
 sleep 1
 
 arch-chroot /mnt hwclock --systohc
 sleep 3
 
-unset TIMEZONE
+unset CFG_TIMEZONE
 
 ############################################################################
 # HOSTNAME
@@ -220,48 +223,48 @@ unset TIMEZONE
 msg 2 "WRITING HOSTNAME TO /etc/hostname"
 
 tee /mnt/etc/hostname <<- EOF >> /dev/null
-	$HOSTNAME
+	$CFG_HOSTNAME
 EOF
 
-unset HOSTNAME
+unset CFG_HOSTNAME
 
 ############################################################################
 # ZRAM
 
-if [ "$ZRAM" = true ] ; then
+if [ "$CFG_ZRAM" = true ] ; then
 	msg 2 "INSTALLING ZRAM-GENERATOR"
 	arch-chroot /mnt pacman -S --noconfirm zram-generator
 
 	msg 2 "WRITING ZRAM CONFIGURATION"
 	tee /mnt/etc/systemd/zram-generator.conf <<- EOF >> /dev/null
 		[zram0]
-		zram-size = $ZRAMSIZE
+		zram-size = $CFG_ZRAMSIZE
 	EOF
 fi
 
-unset ZRAM
-unset ZRAMSIZE
+unset CFG_ZRAM
+unset CFG_ZRAMSIZE
 
 ############################################################################
 # USER CREATION
 
 msg 1 "ENTER A VALID USERNAME: "
-read NAME
-arch-chroot /mnt useradd $NAME -m
+read USER_NAME
+arch-chroot /mnt useradd $USER_NAME -m
 
 msg 1 "ENTER A VALID PASSWORD"
-arch-chroot /mnt passwd $NAME
+arch-chroot /mnt passwd $USER_NAME
 
 mkdir -p /mnt/etc/sudoers.d
-tee /mnt/etc/sudoers.d/$NAME <<- EOF >> /dev/null
-	$NAME ALL=(ALL) ALL
+tee /mnt/etc/sudoers.d/$USER_NAME <<- EOF >> /dev/null
+	$USER_NAME ALL=(ALL) ALL
 EOF
 
-arch-chroot /mnt usermod -aG wheel $NAME
+arch-chroot /mnt usermod -aG wheel $USER_NAME
 
 sleep 3
 
-unset NAME
+unset USER_NAME
 
 ############################################################################
 # TERMINATING

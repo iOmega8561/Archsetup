@@ -1,6 +1,6 @@
 # Linux Kernel to install from linux, linux-zen, linux-lts, linux-hardened
 # This has no effect if cpu architecture is not x86_64, it will default to "linux"
-export CFG_LINUX="linux-zen"
+export CFG_LINUX="linux"
 
 # System locale
 export CFG_LANG="it_IT.UTF-8"

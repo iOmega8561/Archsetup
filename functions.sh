@@ -61,19 +61,19 @@ function partition_checks {
     # first on /mnt then on /mnt/boot
 
     declare temp="$(mount | grep " on /mnt ")"
-    declare -gr PART_ROOT="${__TEMP%%on /mnt*}"
+    declare -gr PART_ROOT="${temp%%on /mnt*}"
 
     unset temp
 
     declare temp="$(mount | grep " on /mnt/boot ")"
-    declare -gr PART_BOOT="${__TEMP%%on /mnt/boot*}"
+    declare -gr PART_BOOT="${temp%%on /mnt/boot*}"
 
     # Here i may write some code to get UUIDs instead of volume names
     # for now we have names, good enough i guess
     # TO-BE-DONE
 }
 
-function boot_entries {
+function bootloader_config {
     declare image="vmlinuz-$CFG_LINUX"
 
     # non-x86 systems might have their kernels named as "Image"
@@ -81,6 +81,9 @@ function boot_entries {
     if [ -f /mnt/boot/Image ] ; then
 	    image="Image"
     fi
+
+    # We'll write two entries, one for normal boot
+    # the other for bootinf fallback initramfs
 
     tee /mnt/boot/loader/entries/02-arch-fallback.conf <<- EOF >> /dev/null
 	    title "Arch Linux (fallback initramfs)"
@@ -96,5 +99,13 @@ function boot_entries {
 	    initrd /initramfs-$CFG_LINUX.img
 	    options root=$PART_ROOT rw
 	    sort-key arch
+    EOF
+
+    # We want normal boot as default
+    # 3 seconds timeout for the boot menu to appear
+
+    tee /mnt/boot/loader/loader.conf <<- EOF >> /dev/null
+	    default 01-arch
+	    timeout 3
     EOF
 }

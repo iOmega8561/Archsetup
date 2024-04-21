@@ -84,17 +84,8 @@ sleep 3
 # SYSTEMD-BOOT CONFIGURATION
 
 msg 2 "WRITING BOOTLOADER CONFIGURATION"
-tee /mnt/boot/loader/loader.conf <<- EOF >> /dev/null
-	default 01-arch
-	timeout 3
-EOF
+bootloader_config
 sleep 3
-
-############################################################################
-# SYSTEMD-BOOT ENTRIES
-
-msg 2 "WRITING BOOTLOADER ENTRIES"
-boot_entries
 
 ############################################################################
 # LOCALES

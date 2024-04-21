@@ -37,8 +37,9 @@ function msg {
 
 CPU_ARCH=$(uname -m)
 
-CPU_VENDOR="${$(cat /proc/cpuinfo \
-			  | grep --max-count=1 vendor_id)#vendor_id*: }"
+__TEMP="$(cat /proc/cpuinfo \
+		| grep --max-count=1 vendor_id)"
+CPU_VENDOR="${__TEMP##vendor_id*: }"
 
 msg 2 "CPU VENDOR $CPU_VENDOR, ARCH $CPU_ARCH"
 
@@ -60,6 +61,7 @@ if [[ "$CPU_ARCH" != "x86_64" ]] ; then
 	export CFG_LINUX=linux
 fi
 
+unset __TEMP
 unset CPU_VENDOR
 unset CPU_ARCH
 
@@ -94,11 +96,13 @@ Swap partition will be auto-detected if the correct GUID type is set\n\n"
 ############################################################################
 # PARTITION CHECKS
 
-PART_ROOT="${$(mount \
-			 | grep " on /mnt ")%%on /mnt*}"
+__TEMP="$(mount | grep " on /mnt ")"
+PART_ROOT="${__TEMP%%on /mnt*}"
+unset __TEMP
 
-PART_BOOT="${$(mount \
-			 | grep " on /mnt/boot ")%%on /mnt/boot*}"
+__TEMP="$(mount | grep " on /mnt/boot ")"
+PART_BOOT="${__TEMP%%on /mnt/boot*}"
+unset __TEMP
 
 msg 1 "DETECTED ROOT MOUNT: $PART_ROOT"
 msg 1 "DETECTED BOOT MOUNT: $PART_BOOT"

@@ -1,5 +1,7 @@
 # Archsetup
-![alt text](https://github.com/iOmega8561/Archsetup/blob/master/screenshot.png?raw=true)
+<p align="center">
+  <img src="https://github.com/iOmega8561/Archsetup/blob/master/screenshot.png?raw=true" />
+</p>
 
 This is an Arch Linux installation script, that executes very basic system commands following the [Arch Linux installation guide](https://wiki.archlinux.org/title/installation_guide) principles very closely.
 

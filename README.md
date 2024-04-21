@@ -4,7 +4,7 @@
 This is an Arch Linux installation script, that executes very basic system commands following the [Arch Linux installation guide](https://wiki.archlinux.org/title/installation_guide) principles very closely.
 
 ## Who is this for?
-This is for people, like myself, that **can** performa a manual installation, but can't bother with having to check the official guide every time they forget something. Basic knowledge of the installation process is **required**, given that zero distaster recovery features are provided.
+This is for people, like myself, that **can** perform a manual installation, but can't bother with having to check the official guide every time they forget something. Basic knowledge of the installation process is **required**, given that zero distaster recovery features are provided.
 
 ## How to use this script
 #### UEFI

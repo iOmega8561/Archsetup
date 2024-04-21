@@ -24,4 +24,4 @@ By default the script will setup zram for you. If you wish not to use zram, set 
 Any other swap configuration is up to you.
 
 #### When ready to start
-Clone this repository directly from the install media and run the script from it's directory.
+Clone this repository, configure your desired parameters in *config.sh* and run ```./archlinux-setup.sh```.

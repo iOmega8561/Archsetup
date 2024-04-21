@@ -38,8 +38,7 @@ function msg {
 CPU_ARCH=$(uname -m)
 
 CPU_VENDOR="${$(cat /proc/cpuinfo \
-			  | grep --max-count=1 vendor_id)\
-			  #vendor_id*: }"
+			  | grep --max-count=1 vendor_id)#vendor_id*: }"
 
 msg 2 "CPU VENDOR $CPU_VENDOR, ARCH $CPU_ARCH"
 
@@ -96,12 +95,10 @@ Swap partition will be auto-detected if the correct GUID type is set\n\n"
 # PARTITION CHECKS
 
 PART_ROOT="${$(mount \
-			 | grep " on /mnt ")\
-			 %%on /mnt*}"
+			 | grep " on /mnt ")%%on /mnt*}"
 
 PART_BOOT="${$(mount \
-			 | grep " on /mnt/boot ")\
-			 %%on /mnt/boot*}"
+			 | grep " on /mnt/boot ")%%on /mnt/boot*}"
 
 msg 1 "DETECTED ROOT MOUNT: $PART_ROOT"
 msg 1 "DETECTED BOOT MOUNT: $PART_BOOT"

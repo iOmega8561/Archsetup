@@ -14,9 +14,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 #
-#
-#
-#
 # Linux Kernel to install from linux, linux-zen, linux-lts, linux-hardened
 # This has no effect if cpu architecture is not x86_64, it will default to "linux"
 declare -g CFG_LINUX="linux"

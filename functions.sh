@@ -14,9 +14,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 #
-#
-#!/usr/bin/env bash
-#
 # In this file we store those routines that are not
 # interactive and have a bunch of lines that may clog
 # the main script too much and destroy readability

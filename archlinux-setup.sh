@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Copyright (C) 2024  Giuseppe Rocco
 #
 # This program is free software: you can redistribute it and/or modify
@@ -12,10 +13,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#
-#
-#!/usr/bin/env bash
 
 source configs.sh
 source functions.sh
@@ -24,7 +21,7 @@ source functions.sh
 ############################################################################
 ############################################################################
 
-machine_checks
+check_machine
 log 2 "CPU VENDOR $CPU_VENDOR, ARCH $CPU_ARCH"
 
 ############################################################################
@@ -52,7 +49,7 @@ Swap partition will be auto-detected if the correct GUID type is set\n\n"
 ############################################################################
 # PARTITION CHECKS
 
-partition_checks
+check_mounts
 
 if [[ $? -eq 1 ]]
 then

@@ -12,10 +12,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#
+
+# In this file we store all the config constants we need.
+# The values below need to be customized according to user needs
+
 # Linux Kernel to install from linux, linux-zen, linux-lts, linux-hardened
 # This has no effect if cpu architecture is not x86_64, it will default to "linux"
+# Actually this is not a constant, because it may need to be overidden later
 declare -g CFG_LINUX="linux"
 
 # System locale

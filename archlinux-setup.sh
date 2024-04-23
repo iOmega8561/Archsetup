@@ -1,74 +1,35 @@
-#!/bin/bash
-############################################################################
-# CONFIGS
+#!/usr/bin/env bash
 
-source configs.sh
+# Copyright (C) 2024  Giuseppe Rocco
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-############################################################################
-############################################################################
-############################################################################
-############################################################################
-############################################################################
-############################################################################
 
-function msg {
-
-	local CODE="0m"
-
-	case $1 in
-		2)
-			CODE="32m"
-			;;
-		1)
-			CODE="33m"
-			;;
-		0)
-			CODE="31m"
-			;;
-		*)
-			;;
-	esac
-
-	echo -e "\033[0;$CODE==> SETUP: \033[0m\033[1m$2\033[0m"
-}
+source modules/config.sh
+source modules/functions.sh
 
 ############################################################################
-# CPU CHECKS
+############################################################################
+############################################################################
 
-CPU_ARCH=$(uname -m)
-
-__TEMP="$(cat /proc/cpuinfo \
-		| grep --max-count=1 vendor_id)"
-CPU_VENDOR="${__TEMP##vendor_id*: }"
-
-msg 2 "CPU VENDOR $CPU_VENDOR, ARCH $CPU_ARCH"
-
-case $CPU_VENDOR in
-	AuthenticAMD)
-		export CPU_UCODE="amd-ucode"
-		;;
-	GenuineIntel)
-		export CPU_UCODE="intel-ucode"
-		;;
-	*)
-		;;
-esac
-
-if [[ "$CPU_ARCH" != "x86_64" ]] ; then
-	unset CPU_UCODE
-	unset CFG_LINUX
-
-	export CFG_LINUX=linux
-fi
-
-unset __TEMP
-unset CPU_VENDOR
-unset CPU_ARCH
+check_machine
+log 2 "CPU VENDOR $CPU_VENDOR, ARCH $CPU_ARCH"
 
 ############################################################################
 # CONFIG CHECKS
 
-msg 1 "CHECK THIS DATA BEFORE CONTINUING"
+log 1 "CHECK THIS DATA BEFORE CONTINUING"
 printf "\nSETTINGS         VALUES
 Kernel:          $CFG_LINUX
 Locale:          $CFG_LANG $CFG_ENCODING
@@ -77,16 +38,10 @@ Timezone:        $CFG_TIMEZONE
 Hostname:        $CFG_HOSTNAME
 Zram:            $CFG_ZRAM
 Zram size:       $CFG_ZRAMSIZE\n\n"
-msg 2 "PRESS ENTER TO CONTINUE"
+log 2 "PRESS ENTER TO CONTINUE"
 read
 
-if [[ "$CFG_ZRAM" = false ]] ; then
-	msg 1 "ZRAM IS DISABLED, YOU PROBABLY WANT A SWAP PARTITION"
-	msg 2 "PRESS ENTER TO CONTINUE"
-	read
-fi
-
-msg 1 "MAKE SURE THESE PARTITIONS ARE MOUNTED:"
+log 1 "MAKE SURE THESE PARTITIONS ARE MOUNTED:"
 printf "\nROOT partition to /mnt     [ TYPE 23 --> Linux root (x86-64) ]
 EFI partition to /mnt/boot [ TYPE 1 --> EFI System Partition ]
 
@@ -96,164 +51,99 @@ Swap partition will be auto-detected if the correct GUID type is set\n\n"
 ############################################################################
 # PARTITION CHECKS
 
-__TEMP="$(mount | grep " on /mnt ")"
-PART_ROOT="${__TEMP%%on /mnt*}"
-unset __TEMP
+check_mounts
 
-__TEMP="$(mount | grep " on /mnt/boot ")"
-PART_BOOT="${__TEMP%%on /mnt/boot*}"
-unset __TEMP
+if [[ $? -eq 1 ]]
+then
+	log 0 "COULD NOT VERIFY PARTITION MOUNTS"
+	exit 1
+fi
 
-msg 1 "DETECTED ROOT MOUNT: $PART_ROOT"
-msg 1 "DETECTED BOOT MOUNT: $PART_BOOT"
+log 1 "DETECTED ROOT MOUNT: $PART_ROOT"
+log 1 "DETECTED BOOT MOUNT: $PART_BOOT"
 
-msg 2 "PRESS ENTER TO START THE INSTALLATION"
+log 2 "PRESS ENTER TO START THE INSTALLATION"
 read
-
-unset PART_BOOT
 
 ############################################################################
 # NTP
 timedatectl set-ntp true
+sleep 1
 
 ############################################################################
 # PACSTRAP
 
-msg 2 "EXECUTING PACSTRAP TO /mnt"
-pacstrap /mnt base $CFG_LINUX $CFG_LINUX-headers linux-firmware \
-			  base-devel sudo networkmanager nano $CPU_UCODE
+log 2 "EXECUTING PACSTRAP TO /mnt"
+pacstrap /mnt base \
+			  $CFG_LINUX \
+			  $CFG_LINUX-headers \
+			  linux-firmware \
+			  base-devel \
+			  sudo \
+			  networkmanager \
+			  nano \
+			  $CPU_UCODE
 sleep 3
-
-unset CPU_UCODE
 
 ############################################################################
 # FSTAB
 
-msg 2 "GENERATING FSTAB"
+log 2 "GENERATING FSTAB"
 genfstab -U /mnt > /mnt/etc/fstab
 sleep 3
 
 ############################################################################
-# SYSTEMD-BOOT INSTALLATION
+# SYSTEMD-BOOT
 
-msg 2 "INSTALLING SYSTEMD-BOOT"
+log 2 "INSTALLING SYSTEMD-BOOT"
 arch-chroot /mnt bootctl install
 sleep 3
 
-############################################################################
-# SYSTEMD-BOOT CONFIGURATION
-
-msg 2 "WRITING BOOTLOADER CONFIGURATION"
-tee /mnt/boot/loader/loader.conf <<- EOF >> /dev/null
-	default 01-arch
-	timeout 3
-EOF
+log 2 "CONFIGURING SYSTEMD-BOOT"
+config_bootloader "$CFG_LINUX" "$PART_ROOT"
 sleep 3
 
 ############################################################################
-# SYSTEMD-BOOT ENTRIES
+# LOCALE
 
-msg 2 "WRITING BOOTLOADER ENTRIES"
-
-BOOT_IMAGE="vmlinuz-$CFG_LINUX"
-
-if [ -f /mnt/boot/Image ] ; then
-	BOOT_IMAGE="Image"
-fi
-
-tee /mnt/boot/loader/entries/02-arch-fallback.conf <<- EOF >> /dev/null
-	title "Arch Linux (fallback initramfs)"
-	linux /$BOOT_IMAGE
-	initrd /initramfs-$CFG_LINUX-fallback.img
-	options root=$PART_ROOT rw
-	sort-key arch-fallback
-EOF
-
-tee /mnt/boot/loader/entries/01-arch.conf <<- EOF >> /dev/null
-	title "Arch Linux"
-	linux /$BOOT_IMAGE
-	initrd /initramfs-$CFG_LINUX.img
-	options root=$PART_ROOT rw
-	sort-key arch
-EOF
-
-unset BOOT_IMAGE
-unset CFG_LINUX
-unset PART_ROOT
-
-############################################################################
-# LOCALES
-
-msg 2 "SETTING LOCALE $CFG_LANG"
-
-tee -a /mnt/etc/locale.gen <<- EOF >> /dev/null
-	$CFG_LANG $CFG_ENCODING
-EOF
-
-tee /mnt/etc/locale.conf <<- EOF >> /dev/null
-	LANG=$CFG_LANG
-EOF
-
-tee /mnt/etc/vconsole.conf <<- EOF >> /dev/null
-	KEYMAP=$CFG_KEYMAP
-EOF
-
-arch-chroot /mnt locale-gen
+log 2 "CONFIGURING LOCALE $CFG_LANG"
+config_localization "$CFG_LANG" "$CFG_ENCODING" "$CFG_KEYMAP"
 sleep 3
 
-unset CFG_LANG
-unset CFG_ENCODING
-unset CFG_KEYMAP
-
 ############################################################################
-# TIME AND TIMEZONE
+# LOCALTIME
 
-msg 2 "SETTING SYSTEM TIME"
-
-arch-chroot /mnt ln -sf /usr/share/zoneinfo/$CFG_TIMEZONE /etc/localtime
-sleep 1
-
-arch-chroot /mnt hwclock --systohc
+log 2 "CONFIGURING SYSTEM TIME"
+config_localtime "$CFG_TIMEZONE"
 sleep 3
-
-unset CFG_TIMEZONE
 
 ############################################################################
 # HOSTNAME
 
-msg 2 "WRITING HOSTNAME TO /etc/hostname"
-
+log 2 "WRITING HOSTNAME"
 tee /mnt/etc/hostname <<- EOF >> /dev/null
 	$CFG_HOSTNAME
 EOF
-
-unset CFG_HOSTNAME
+sleep 3
 
 ############################################################################
 # ZRAM
 
 if [ "$CFG_ZRAM" = true ] ; then
-	msg 2 "INSTALLING ZRAM-GENERATOR"
-	arch-chroot /mnt pacman -S --noconfirm zram-generator
-
-	msg 2 "WRITING ZRAM CONFIGURATION"
-	tee /mnt/etc/systemd/zram-generator.conf <<- EOF >> /dev/null
-		[zram0]
-		zram-size = $CFG_ZRAMSIZE
-	EOF
+	msg 2 "CONFIGURING ZRAM-GENERATOR"
+	config_zram "$CFG_ZRAMSIZE"
 fi
-
-unset CFG_ZRAM
-unset CFG_ZRAMSIZE
 
 ############################################################################
 # USER CREATION
+# This section requires human interaction
+# Will not be moved to functions file
 
-msg 1 "ENTER A VALID USERNAME: "
+log 1 "ENTER A VALID USERNAME: "
 read USER_NAME
 arch-chroot /mnt useradd $USER_NAME -m
 
-msg 1 "ENTER A VALID PASSWORD"
+log 1 "ENTER A VALID PASSWORD"
 arch-chroot /mnt passwd $USER_NAME
 
 mkdir -p /mnt/etc/sudoers.d
@@ -265,10 +155,9 @@ arch-chroot /mnt usermod -aG wheel $USER_NAME
 
 sleep 3
 
-unset USER_NAME
-
 ############################################################################
 # TERMINATING
 
-msg 2 "SETUP PROCESS COMPLETED"
+log 2 "SETUP PROCESS COMPLETED"
 sleep 2
+exit 0

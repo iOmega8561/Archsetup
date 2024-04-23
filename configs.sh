@@ -22,12 +22,15 @@
 declare -g CFG_LINUX="linux"
 
 # System locale
+# Possible values can be checked in /etc/locale.gen
 declare -gr CFG_LANG="it_IT.UTF-8"
 
 # System locale encoding
+# Possible values can be checked in /etc/locale.gen
 declare -gr CFG_ENCODING="UTF-8"
 
 # vconsole keymap
+# Possible values can be checked with "localectl list-keymaps"
 declare -gr CFG_KEYMAP="it"
 
 # System timezone

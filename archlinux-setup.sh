@@ -16,8 +16,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-source configs.sh
-source functions.sh
+source modules/config.sh
+source modules/functions.sh
 
 ############################################################################
 ############################################################################
@@ -68,6 +68,7 @@ read
 ############################################################################
 # NTP
 timedatectl set-ntp true
+sleep 1
 
 ############################################################################
 # PACSTRAP
@@ -103,48 +104,40 @@ config_bootloader "$CFG_LINUX" "$PART_ROOT"
 sleep 3
 
 ############################################################################
-# LOCALES
+# LOCALE
 
 log 2 "CONFIGURING LOCALE $CFG_LANG"
 config_localization "$CFG_LANG" "$CFG_ENCODING" "$CFG_KEYMAP"
 sleep 3
 
 ############################################################################
-# TIME AND TIMEZONE
+# LOCALTIME
 
 log 2 "CONFIGURING SYSTEM TIME"
-
-arch-chroot /mnt ln --symbolic --force /usr/share/zoneinfo/$CFG_TIMEZONE /etc/localtime
-sleep 1
-
-arch-chroot /mnt hwclock --systohc
+config_localtime "$CFG_TIMEZONE"
 sleep 3
 
 ############################################################################
 # HOSTNAME
 
 log 2 "WRITING HOSTNAME"
-
 tee /mnt/etc/hostname <<- EOF >> /dev/null
 	$CFG_HOSTNAME
 EOF
+sleep 3
 
 ############################################################################
 # ZRAM
 
 if [ "$CFG_ZRAM" = true ] ; then
-	msg 2 "INSTALLING ZRAM-GENERATOR"
-	arch-chroot /mnt pacman -S --noconfirm zram-generator
-
 	msg 2 "CONFIGURING ZRAM-GENERATOR"
-	tee /mnt/etc/systemd/zram-generator.conf <<- EOF >> /dev/null
-		[zram0]
-		zram-size = $CFG_ZRAMSIZE
-	EOF
+	config_zram "$CFG_ZRAMSIZE"
 fi
 
 ############################################################################
 # USER CREATION
+# This section requires human interaction
+# Will not be moved to functions file
 
 log 1 "ENTER A VALID USERNAME: "
 read USER_NAME

@@ -142,7 +142,10 @@ function config_bootloader {
 
 function config_localization {
 	# This function wants these three parameters
-	# LANG ENCODING KEYMAP in this order
+	# LANG can be any value in /etc/locale.gen
+	# ENCODING can be any encoding value in /etc/locale.gen
+	# KEYMAP can be any value displayed by "localectl list-keymaps"
+	# in this order
 
 	declare lang="$1"
 	declare encoding="$2"
@@ -161,4 +164,31 @@ function config_localization {
 	EOF
 
 	arch-chroot /mnt locale-gen
+}
+
+function config_localtime {
+	# This function wants a TIMEZONE parameter
+	# (Country/City format)
+
+	declare tz="$1"
+
+	arch-chroot /mnt ln --symbolic --force \
+					 /usr/share/zoneinfo/$tz \
+					 /etc/localtime
+
+	arch-chroot /mnt hwclock --systohc
+}
+
+function config_zram {
+	# This function wants ZRAMSIZE as input parameter
+	# Could be any value accepted by zram-generator.conf
+	# https://wiki.archlinux.org/title/Zram#Using_zram-generator
+
+	arch-chroot /mnt pacman -S --noconfirm \
+					 zram-generator
+	
+	tee /mnt/etc/systemd/zram-generator.conf <<- EOF >> /dev/null
+		[zram0]
+		zram-size = $CFG_ZRAMSIZE
+	EOF
 }

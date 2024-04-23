@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+
 source configs.sh
 source functions.sh
 
@@ -97,40 +98,36 @@ log 2 "INSTALLING SYSTEMD-BOOT"
 arch-chroot /mnt bootctl install
 sleep 3
 
-log 2 "WRITING BOOTLOADER CONFIGURATION"
+log 2 "CONFIGURING SYSTEMD-BOOT"
 config_bootloader "$CFG_LINUX" "$PART_ROOT"
 sleep 3
 
 ############################################################################
 # LOCALES
 
-log 2 "SETTING LOCALE $CFG_LANG"
+log 2 "CONFIGURING LOCALE $CFG_LANG"
 config_localization "$CFG_LANG" "$CFG_ENCODING" "$CFG_KEYMAP"
 sleep 3
 
 ############################################################################
 # TIME AND TIMEZONE
 
-log 2 "SETTING SYSTEM TIME"
+log 2 "CONFIGURING SYSTEM TIME"
 
-arch-chroot /mnt ln -sf /usr/share/zoneinfo/$CFG_TIMEZONE /etc/localtime
+arch-chroot /mnt ln --symbolic --force /usr/share/zoneinfo/$CFG_TIMEZONE /etc/localtime
 sleep 1
 
 arch-chroot /mnt hwclock --systohc
 sleep 3
 
-unset CFG_TIMEZONE
-
 ############################################################################
 # HOSTNAME
 
-log 2 "WRITING HOSTNAME TO /etc/hostname"
+log 2 "WRITING HOSTNAME"
 
 tee /mnt/etc/hostname <<- EOF >> /dev/null
 	$CFG_HOSTNAME
 EOF
-
-unset CFG_HOSTNAME
 
 ############################################################################
 # ZRAM
@@ -139,7 +136,7 @@ if [ "$CFG_ZRAM" = true ] ; then
 	msg 2 "INSTALLING ZRAM-GENERATOR"
 	arch-chroot /mnt pacman -S --noconfirm zram-generator
 
-	msg 2 "WRITING ZRAM CONFIGURATION"
+	msg 2 "CONFIGURING ZRAM-GENERATOR"
 	tee /mnt/etc/systemd/zram-generator.conf <<- EOF >> /dev/null
 		[zram0]
 		zram-size = $CFG_ZRAMSIZE
@@ -164,8 +161,6 @@ EOF
 arch-chroot /mnt usermod -aG wheel $USER_NAME
 
 sleep 3
-
-unset USER_NAME
 
 ############################################################################
 # TERMINATING

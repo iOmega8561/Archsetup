@@ -20,8 +20,8 @@ The only **very important** things to have:
 4. GUID partition type correctly set to 1 for your EFI volume
 
 #### Swap
-By default the script will setup zram for you. If you wish not to use zram, set **ZRAM = false** in config.sh.
+By default the script will setup zram for you. If you wish not to use zram, set **ZRAM = false** in *modules/config.sh*.
 Any other swap configuration is up to you.
 
 #### When ready to start
-Clone this repository, configure your desired parameters in *config.sh* and run ```./archlinux-setup.sh```.
+Clone this repository, configure your desired parameters in *modules/config.sh* and run ```./archlinux-setup.sh```.

@@ -82,6 +82,8 @@ pacstrap /mnt base \
 			  sudo \
 			  networkmanager \
 			  nano \
+			  lvm2 \
+			  cryptsetup \
 			  $CPU_UCODE
 sleep 3
 

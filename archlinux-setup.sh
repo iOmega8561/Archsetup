@@ -89,6 +89,13 @@ pacstrap /mnt base \
 sleep 3
 
 ############################################################################
+# SYSTEMD INITCPIO
+
+log 2 "WRITING MKINITCPIO CONF"
+config_mkinicptio
+sleep 3
+
+############################################################################
 # FSTAB
 
 log 2 "GENERATING FSTAB"

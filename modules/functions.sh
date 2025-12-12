@@ -73,6 +73,35 @@ function check_machine {
 	esac
 }
 
+function config_mkinicptio {
+	# The HOOKS control the modules and scripts added to the image, 
+	# and what happens at boot time. Order is important, and it is 
+	# recommended that you do not change the order in which HOOKS are added.
+	#
+	# The setup below covers the basic security features that you would
+	# want in a modern system. Encryption and LVM2 support have been added.
+	# From https://wiki.archlinux.org/title/Dm-crypt/Encrypting_an_entire_system
+
+	tee /mnt/etc/mkinitcpio.conf.d/100-archsetup.conf <<- EOF >> /dev/null
+		HOOKS=(base 
+		       systemd 
+			   autodetect 
+			   microcode 
+			   modconf 
+			   kms 
+			   keyboard 
+			   sd-vconsole 
+			   block 
+			   sd-encrypt 
+			   lvm2 
+			   filesystems
+			   fsck)
+	EOF
+
+	# Regen all initramfs presets
+	arch-chroot mkinitcpio -P
+}
+
 function check_mounts {
 	# We try to determine what is mounted
 	# first on /mnt then on /mnt/boot

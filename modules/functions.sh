@@ -141,17 +141,8 @@ function config_bootloader {
 		image="Image"
 	fi
 
-	# We'll write two entries, one for normal boot
-	# the other for bootinf fallback initramfs
-
-	tee /mnt/boot/loader/entries/02-arch-fallback.conf <<- EOF >> /dev/null
-		title "Arch Linux (fallback initramfs)"
-		linux /$image
-		initrd /initramfs-$linux-fallback.img
-		options root=$root rw
-		sort-key 02-arch-fallback
-	EOF
-
+	# We start by writing the default entry,
+	# along with systemd-boot configuration
 	tee /mnt/boot/loader/entries/01-arch.conf <<- EOF >> /dev/null
 		title "Arch Linux"
 		linux /$image
@@ -160,12 +151,23 @@ function config_bootloader {
 		sort-key 01-arch
 	EOF
 
-	# We want normal boot as default
+	# 01-arch will be set as default entry
 	# 3 seconds timeout for the boot menu to appear
-
 	tee /mnt/boot/loader/loader.conf <<- EOF >> /dev/null
 		default 01-arch
 		timeout 3
+	EOF
+
+	# Write the fallback entry only if the corresponding initramfs exists
+	# on disk (mkinitcpio from version 40 disables fallback by default)
+	[ ! -f /mnt/boot/initramfs-$linux-fallback.img ] && return
+
+	tee /mnt/boot/loader/entries/02-arch-fallback.conf <<- EOF >> /dev/null
+		title "Arch Linux (fallback initramfs)"
+		linux /$image
+		initrd /initramfs-$linux-fallback.img
+		options root=$root rw
+		sort-key 02-arch-fallback
 	EOF
 }
 

@@ -120,7 +120,7 @@ function config_bootloader {
 		linux /$image
 		initrd /initramfs-$linux-fallback.img
 		options root=$root rw
-		sort-key arch-fallback
+		sort-key 02-arch-fallback
 	EOF
 
 	tee /mnt/boot/loader/entries/01-arch.conf <<- EOF >> /dev/null
@@ -128,7 +128,7 @@ function config_bootloader {
 		linux /$image
 		initrd /initramfs-$linux.img
 		options root=$root rw
-		sort-key arch
+		sort-key 01-arch
 	EOF
 
 	# We want normal boot as default

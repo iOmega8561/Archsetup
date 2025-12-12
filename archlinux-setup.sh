@@ -89,13 +89,6 @@ pacstrap /mnt base \
 sleep 3
 
 ############################################################################
-# SYSTEMD INITCPIO
-
-log 2 "WRITING MKINITCPIO CONF"
-config_mkinicptio
-sleep 3
-
-############################################################################
 # FSTAB
 
 log 2 "GENERATING FSTAB"
@@ -143,6 +136,13 @@ if [ "$CFG_ZRAM" = true ] ; then
 	msg 2 "CONFIGURING ZRAM-GENERATOR"
 	config_zram "$CFG_ZRAMSIZE"
 fi
+
+############################################################################
+# SYSTEMD INITCPIO
+
+log 2 "CONFIGURING MKINITCPIO"
+config_mkinicptio
+sleep 3
 
 ############################################################################
 # USER CREATION

@@ -133,7 +133,7 @@ sleep 3
 # ZRAM
 
 if [ "$CFG_ZRAM" = true ] ; then
-	msg 2 "CONFIGURING ZRAM-GENERATOR"
+	log 2 "CONFIGURING ZRAM-GENERATOR"
 	config_zram "$CFG_ZRAMSIZE"
 fi
 

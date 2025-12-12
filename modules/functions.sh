@@ -99,7 +99,7 @@ function config_mkinicptio {
 	EOF
 
 	# Regen all initramfs presets
-	arch-chroot mkinitcpio -P
+	arch-chroot /mnt mkinitcpio -P
 }
 
 function check_mounts {

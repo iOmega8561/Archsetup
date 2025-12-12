@@ -84,6 +84,7 @@ pacstrap /mnt base \
 			  nano \
 			  lvm2 \
 			  cryptsetup \
+			  sbctl \
 			  $CPU_UCODE
 sleep 3
 
